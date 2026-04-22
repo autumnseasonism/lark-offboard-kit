@@ -1,0 +1,43 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# === lark-offboard-kit 运行产物 ===
+.offboard-cache/
+out/
+real-run-out/
+handover-*.md
+plan.json
+
+# === Node (lark-cli 若从源码装) ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
+# === 编辑器 / IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === 操作系统 ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === 本地敏感文件 ===
+*.local
+.env
+.env.local
+*.key
+*.pem
+credentials.json
