@@ -195,42 +195,30 @@ python3 scripts/offboard.py handover --plan ./out/plan.json --execute
 
 ## 🏗️ 工作原理
 
-```
-                        ┌──────────────────────────────────┐
-                        │         preflight.sh             │
-                        │                                  │
-                        │  ① 检测 lark-cli                  │
-                        │      ↳ 缺失 → npm install -g      │
-                        │  ② lark-cli auth status           │
-                        │  ③ 探测 5 模块 scope              │
-                        │      → .offboard-cache/scopes.json│
-                        └──────────────┬───────────────────┘
-                                       │
-                                       ▼
-                ┌────────────────────────────────────────────┐
-                │             offboard.py run                │
-                │                                            │
-                │    ┌──────┐ ┌────────┐ ┌───────┐          │
-                │    │ docs │ │approval│ │  im   │          │
-                │    └──┬───┘ └───┬────┘ └───┬───┘          │
-                │       │         │          │   + 2 more   │
-                │       └─────────┼──────────┘              │
-                │                 ▼                          │
-                │       asyncio.gather(return_exceptions)    │
-                │                 │                          │
-                │  ┌──────────────┴────────────────────┐    │
-                │  │  熔断 · 429 退避 · 全局超时 · 降级  │    │
-                │  └──────────────┬────────────────────┘    │
-                │                 ▼                          │
-                │      plan.json + handover-*.md             │
-                └─────────────────┬──────────────────────────┘
-                                  │
-                                  ▼
-                ┌────────────────────────────────────────────┐
-                │        offboard.py handover (可选)          │
-                │                                            │
-                │  dry-run → 打印计划 → [y/N] 确认 → 执行     │
-                └────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    User["🗣️ 某员工要离职了"] --> Preflight
+
+    Preflight["🔧 前置检查<br/>lark-cli 检测 · 自动 npm install · 登录校验 · scope 探测"] --> Collect
+
+    subgraph Collect["📥 阶段一：采集（5 模块并行，asyncio.gather）"]
+        direction LR
+        C1["📄 文档"] ~~~ C2["✅ 审批"] ~~~ C3["👥 群主"] ~~~ C4["📋 任务"] ~~~ C5["📅 周期会议"]
+    end
+
+    Collect --> Analyze
+
+    subgraph Analyze["🔍 阶段二：研判（鲁棒性 + 状态判定）"]
+        direction LR
+        A1["模块熔断"] ~~~ A2["429 指数退避"] ~~~ A3["全局超时"] ~~~ A4["三档状态机<br/>ok / partial / broken"] ~~~ A5["完整度告警"]
+    end
+
+    Analyze --> Action
+
+    subgraph Action["⚡ 阶段三：行动（默认 dry-run · 显式 --execute）"]
+        direction LR
+        O1["📋 生成清单<br/>handover.md"] ~~~ O2["💾 结构化数据<br/>plan.json"] ~~~ O3["📘 建飞书文档"] ~~~ O4["👑 批量转群主"] ~~~ O5["📋 批量转任务"] ~~~ O6["🔁 发起交接审批"]
+    end
 ```
 
 ### 采集模块 → 真实 lark-cli 命令映射
